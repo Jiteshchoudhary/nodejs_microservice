@@ -1,0 +1,48 @@
+version: '3'
+services:
+  rabbitmq:
+    image: "rabbitmq:latest"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  mongo:
+    image: "mongo"
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  user-service:
+    build: ./user-service
+    ports:
+      - "4000:4000"
+    depends_on:
+      - mongo
+      - rabbitmq
+    environment:
+      - MONGO_URI=mongodb://mongo/userdb
+      - RABBITMQ_URI=amqp://rabbitmq:5672  # Ensure you're using this in the app
+
+  product-service:
+    build: ./product-service
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongo
+    environment:
+      - MONGO_URI=mongodb://mongo/productdb
+
+  order-service:
+    build: ./order-service
+    ports:
+      - "6000:6000"
+    depends_on:
+      - mongo
+      - rabbitmq
+    environment:
+      - MONGO_URI=mongodb://mongo/orderdb
+      - RABBITMQ_URI=amqp://rabbitmq:5672  # Use this in your RabbitMQ connection logic
+
+volumes:
+  mongo-data:
